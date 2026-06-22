@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="apple-touch-icon" href="app-icon.PNG">
+
+<link rel="icon" type="image/png" sizes="192x192" href="app-icon.PNG">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Back Alley Gin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --card-w: 55px; --card-h: 82px; 
+            /* THE VINTAGE GREEN PALETTE (R:80, G:99, B:73) */
+            --hunter-dark: rgb(60, 75, 55);
+            --hunter-light: rgb(120, 140, 103);
+            --hunter-box: rgb(40, 50, 36);
+            
+            --main-gold: #d4af37;
+            --sec-cream: #fdf6e3;
+            --trim-cream: #fdf6e3;
+            --inactive-grey: #374151;
+            --panel-border: #d4c3a3;
+            --wood-medium: #92400e;
+            --wood-dark: #78350f;
+            --wood-deep: #451a03;
+            --divider-gray: #9ca3af; 
+            --inlay-cream: #d4c3a3;
+            /* Lobby Frame Colors (Mahogany) */
+            --lobby-wood: rgb(145, 84, 55);
+            --lobby-inlay: rgb(225, 210, 173);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @media (min-width: 640px) { 
+            :root { --card-w: 70px; --card-h: 105px; } 
+        }
+
+        html, body {
+            margin: 0; padding: 0; 
+            height: 100%; width: 100%;
+            overflow: hidden; 
+            position: fixed; 
+            background: var(--wood-deep);
+            color: white; 
+            font-family: 'Archivo Black', system-ui, sans-serif;
+            touch-action: none;
+        }
+
+        /* --- SHARED FRAME STYLES --- */
+        .vintage-outer-frame {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--lobby-wood);
+            padding: 9pt; 
+            display: flex;
+            box-shadow: 
+                inset 0 10px 20px rgba(255,255,255,0.1),
+                inset 0 -10px 20px rgba(0,0,0,0.4);
+        }
+
+        .vintage-inner-inlay {
+            flex: 1;
+            background: var(--lobby-inlay);
+            padding: 5pt; 
+            display: flex;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .vintage-felt-content {
+            flex: 1;
+            background: radial-gradient(circle at center, rgb(100, 120, 93) 0%, var(--hunter-light) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            border-radius: 2px;
+            overflow-y: auto;
+            padding: 20px 10px;
+        }
+
+        /* --- MAIN GAME TABLE FRAME STYLES --- */
+        .table-frame {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--wood-medium);
+            padding: 6pt;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 
+                inset 0 6px 12px rgba(255,255,255,0.1),
+                inset 0 -6px 12px rgba(0,0,0,0.4);
+        }
+
+        .inner-inlay {
+            position: relative;
+            flex: 1;
+            background: var(--inlay-cream);
+            padding: 3pt;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+            border-radius: 4px;
+        }
+
+        .game-viewport {
+            position: relative; 
+            flex: 1; width: 100%;
+            display: flex; flex-direction: column;
+            padding: 12px; box-sizing: border-box;
+            background: radial-gradient(circle at center, rgb(100, 120, 93) 0%, var(--hunter-light) 100%);
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+            border-radius: 2px;
+        }
+
+        /* Hierarchy of Overlays */
+        .z-lobby { z-index: 500; }
+        .z-pause { z-index: 1000; }
+        .z-info { z-index: 2000; }
+
+        .logo-container {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            text-align: center;
+            min-height: 50px;
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area {
+                position: absolute;
+                left: 0; top: 0;
+                width: 100%;
+                background: white !important;
+                color: black !important;
+                padding: 20px;
+            }
+            .no-print { display: none !important; }
+            .scorecard-table { border-collapse: collapse; width: 100%; font-family: sans-serif; color: black; }
+            .scorecard-table th, .scorecard-table td { border: 1px solid black; padding: 4px; text-align: center; font-size: 10px; }
+            .scorecard-table th { background-color: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
+            .round-col { font-weight: bold; background-color: #eee !important; width: 30px; }
+            .print-message { 
+                font-family: serif; 
+                font-style: italic; 
+                text-align: center; 
+                margin-bottom: 25px; 
+                line-height: 1.5;
+                font-size: 14px;
+                padding: 0 40px;
+            }
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        .confetti {
+            position: fixed; top: -10px; width: 10px; height: 10px;
+            z-index: 3000; pointer-events: none;
+            animation: confetti-fall 3s linear forwards;
+        }
+        
+        @keyframes victory-pulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 0px var(--main-gold)); }
+            50% { transform: scale(1.1); filter: drop-shadow(0 0 20px var(--main-gold)); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 0px var(--main-gold)); }
+        }
+        .animate-victory { animation: victory-pulse 2s infinite ease-in-out; }
+
+        .text-3d-gold { color: var(--main-gold); }
+        .text-3d-dark { color: black; }
+
+        .suit-divider {
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            color: var(--divider-gray); font-size: 14px; margin: 8px 0; opacity: 0.8;
+        }
+        .suit-divider::before, .suit-divider::after {
+            content: ""; flex: 1; height: 1px; background: linear-gradient(to var(--dir, right), transparent, var(--divider-gray));
+        }
+        .suit-divider::after { --dir: left; }
+
+        .suit-divider-mini {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            color: var(--divider-gray); font-size: 10px; margin: 2px 0; opacity: 0.8; width: 100%;
+        }
+        .suit-divider-mini::before, .suit-divider-mini::after {
+            content: ""; flex: 1; height: 1px; background: linear-gradient(to var(--dir, right), transparent, var(--divider-gray));
+        }
+        .suit-divider-mini::after { --dir: left; }
+
+        .ace-card-face,
+        .image-card-face {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            overflow: hidden;
+        }
+        .ace-card-face .ace-image,
+        .image-card-face .card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .card {
+            width: var(--card-w); height: var(--card-h);
+            background: white; color: black; border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 3px; cursor: pointer; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative; border: 1.5px solid #ccc; user-select: none;
+            overflow: hidden; font-family: system-ui, sans-serif;
+        }
+        .card.red { color: #dc2626; }
+        .card.trump-highlight { 
+            border: 2.5px solid var(--main-gold); 
+            background: #fffef0;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+        }
+
+        /* Big Joker: replace gold glow with a rainbow glow similar in intensity */
+        .card.big-joker {
+            background: #fffef0;
+            border: 2.5px solid transparent; /* match gold thickness */
+            border-radius: 6px; /* match rest of deck */
+            /* rainbow border like the gold edge using border-image */
+            border-image: conic-gradient(#ff004d,#ff7a00,#ffdd00,#22c55e,#3b82f6,#7c3aed) 1;
+            box-shadow: 0 0 8px rgba(124,58,237,0.06), 0 0 4px rgba(59,130,246,0.05);
+            overflow: hidden; /* ensure image and corners conform */
+        }
+        .card.big-joker > .image-card-face { position: relative; z-index: 1; padding: 0; border-radius: inherit; overflow: hidden; }
+        .card.big-joker .card-image { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; padding: 0; background: transparent; }
+        .card-back { 
+            background: #1e3a8a; 
+            background-image: radial-gradient(circle, #2563eb 1px, transparent 1px);
+            background-size: 6px 6px;
+            border: 1.5px solid white; 
+        }
+
+        .hand-container {
+            position: relative; width: 100%; height: 150px;
+            display: flex; justify-content: center; align-items: flex-end;
+            padding-bottom: 20px; flex-shrink: 0; perspective: 1000px;
+        }
+
+        .player-hand {
+            position: relative; display: flex; justify-content: center; align-items: flex-end; height: 100%; width: 100%;
+        }
+
+        .fan-card {
+            position: absolute; bottom: 0; transform-origin: bottom center;
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .fan-card.selected {
+            z-index: 100 !important;
+            transform: translate(var(--hover-tx), -40px) rotate(0deg) scale(1.15) !important;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.6);
+        }
+
+        .table-center {
+            position: relative; flex: 1; display: flex; align-items: center; justify-content: center;
+            min-height: 250px; 
+        }
+
+        #confirm-btn {
+            position: absolute; z-index: 100; background: var(--main-gold); color: black; font-weight: 900;
+            padding: 12px 24px; border-radius: 99px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.8rem;
+            transform: scale(0); transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid var(--sec-cream);
+        }
+        #confirm-btn.visible { transform: scale(1); }
+
+        .played-card { position: absolute; z-index: 10; }
+
+        .deck-stack {
+            position: absolute; width: var(--card-w); height: var(--card-h);
+            perspective: 1000px;
+        }
+        .deck-card {
+            position: absolute; width: 100%; height: 100%;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes shuffle-left {
+            0% { transform: translateX(0) rotate(0); }
+            50% { transform: translateX(-60px) rotate(-10deg); }
+            100% { transform: translateX(0) rotate(0); }
+        }
+        @keyframes shuffle-right {
+            0% { transform: translateX(0) rotate(0); }
+            50% { transform: translateX(60px) rotate(10deg); }
+            100% { transform: translateX(0) rotate(0); }
+        }
+        .shuffling .deck-card:nth-child(odd) { animation: shuffle-left 0.5s infinite ease-in-out; }
+        .shuffling .deck-card:nth-child(even) { animation: shuffle-right 0.5s infinite ease-in-out; }
+
+        #bid-panel {
+            position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%);
+            width: 260px; background: var(--hunter-dark); border: 2px solid var(--trim-cream);
+            border-radius: 12px; padding: 12px; z-index: 250; text-align: center;
+        }
+
+        .bid-btn { 
+            background: var(--hunter-box); color: white; border: 1px solid rgba(255,255,255,0.1); font-weight: 900; 
+            padding: 10px; border-radius: 6px; font-size: 0.85rem; transition: all 0.2s;
+        }
+        .bid-btn.selected {
+            background: var(--main-gold); color: black; border-color: var(--sec-cream); transform: scale(1.1);
+        }
+
+        .status-tag { 
+            padding: 4px 8px; border-radius: 12px; background: transparent;
+            font-size: 0.6rem; border: 1.5px solid var(--sec-cream); white-space: nowrap;
+            font-weight: bold; display: flex; flex-direction: column; align-items: center; transition: all 0.3s;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+        }
+        .active-turn { border-color: var(--main-gold) !important; color: var(--main-gold); transform: scale(1.05); }
+        
+        @keyframes bidPulse {
+            0% { box-shadow: 0 0 0px var(--main-gold); border-color: var(--sec-cream); }
+            50% { box-shadow: 0 0 15px var(--main-gold); border-color: var(--main-gold); }
+            100% { box-shadow: 0 0 0px var(--main-gold); border-color: var(--sec-cream); }
+        }
+        .bid-glow { animation: bidPulse 1.5s ease-out; }
+
+        #seat-left, #seat-right {
+            min-width: 5.5rem;
+            overflow: visible;
+        }
+        #seat-left .status-tag,
+        #seat-right .status-tag {
+            min-width: 5rem;
+            white-space: nowrap;
+        }
+        .dealer-chip { background: #ef4444; color: white; font-size: 7px; padding: 1px 3px; border-radius: 3px; text-transform: uppercase; margin-left: 0.25rem; }
+
+        .info-panel {
+            background: var(--sec-cream); border: 2px solid var(--panel-border); border-radius: 12px;
+            padding: 8px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 90px;
+            color: black; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .suit-red { color: #dc2626 !important; }
+        .suit-black { color: black !important; }
+
+        .dot { width: 10px; height: 10px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; flex-shrink: 0; }
+        .dot-red { background: #7f1d1d; color: #fca5a5; box-shadow: 0 0 8px #ef4444; border: 1px solid #dc2626; }
+        .dot-blue { background: #1e3a8a; color: #3b82f6; box-shadow: 0 0 6px #3b82f6; }
+
+        .style-btn { font-size: 8px; font-weight: 900; padding: 8px 4px; border-radius: 6px; text-transform: uppercase; width: 90px; text-align: center; border: none; outline: none; }
+        .style-btn:focus { outline: none; }
+        .style-normal { background: #1e3a8a; color: white; border: none; }
+        .style-aggro { background: #7f1d1d; color: #fca5a5; border: none; }
+
+        .settings-btn {
+            background: transparent; border: none; padding: 4px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); outline: none;
+        }
+        .settings-btn svg {
+            filter: drop-shadow(0px 1px 0px var(--wood-deep)) drop-shadow(0px 2px 0px var(--wood-deep)) drop-shadow(0px 3.5px 0px #271003) drop-shadow(0px 5px 8px rgba(0,0,0,0.6));
+            transition: transform 0.4s ease;
+        }
+        .settings-btn:hover { transform: scale(1.1); }
+        .settings-btn:hover svg { transform: rotate(45deg); }
+        .settings-btn:active { transform: scale(0.9) translateY(2px); }
+
+        .history-table { width: 100%; border-collapse: separate; border-spacing: 0 4px; }
+        .history-table th { font-size: 8px; text-transform: uppercase; color: var(--main-gold); background: var(--hunter-box); padding: 6px 4px; text-align: center; font-weight: 900; }
+        .history-table td { padding: 6px 4px; font-size: 9px; text-align: center; background: var(--sec-cream); color: black; }
+        .history-table tr td:first-child { border-radius: 4px 0 0 4px; font-weight: bold; color: #854d0e; }
+        .history-table tr td:last-child { border-radius: 0 4px 4px 0; }
+        .history-pos { color: #166534; font-weight: bold; }
+        .history-neg { color: #991b1b; font-weight: bold; }
+
+        .error-toast {
+            position: fixed; bottom: 20%; left: 50%; transform: translateX(-50%);
+            background: #ef4444; color: white; padding: 10px 20px; border-radius: 8px;
+            font-weight: bold; font-size: 12px; z-index: 5000; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+        }
+        .error-toast.show { opacity: 1; }
+
+        .btn-gold { background: var(--main-gold); color: black; font-weight: 900; }
+        .btn-cream { background: var(--sec-cream); color: black; font-weight: 900; }
+        .btn-grey { background: var(--inactive-grey); color: #cbd5e1; }
+        .bg-hunter-box { background-color: var(--hunter-box); }
+        .bg-hunter-dark { background-color: var(--hunter-dark); }
+        .border-cream { border-color: var(--trim-cream); }
+
+        .log-btn-main {
+            width: 100%; margin-top: 6px; padding: 6px 2px; font-size: 9px; font-weight: 900; text-transform: uppercase;
+            letter-spacing: 0.05em; background: var(--main-gold); color: black; border: 1.5 solid var(--panel-border); border-radius: 6px;
+            box-shadow: 0 2px 0 #917725, 0 3px 6px rgba(0,0,0,0.3); cursor: pointer; transition: all 0.1s; display: flex; align-items: center; justify-content: center; gap: 4px;
+        }
+        .log-btn-main:active { transform: translateY(1px); box-shadow: 0 1px 0 #917725, 0 1px 3px rgba(0,0,0,0.3); }
+
+        .cream-panel { background: var(--sec-cream) !important; border: 2px solid var(--panel-border) !important; color: black !important; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+
+        #player-inputs input { border: 1px solid var(--panel-border); box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); font-family: system-ui, sans-serif; }
+        #player-inputs input:focus { border-color: var(--main-gold); outline: none; }
+
+        .btn-3d { box-shadow: 0 4px 0 rgba(0,0,0,0.2), 0 5px 10px rgba(0,0,0,0.3); transition: all 0.1s; }
+        .btn-3d:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.3); }
+
+        .side-panel { padding: 4px 6px !important; min-width: 85px !important; }
+        .score-row { font-size: 9px !important; }
+        .score-val { font-size: 10px !important; }
+
+        .stat-card { background: var(--hunter-box); padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
+
+        .bid-summary-item {
+            display: flex; flex-direction: column; align-items: center; flex: 1;
+        }
+        #print-area {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.65);
+            z-index: 6000;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #print-area.visible {
+            display: flex;
+        }
+        #print-area .preview-modal {
+            width: min(100%, 900px);
+            max-height: 90vh;
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+        }
+        #print-area .preview-content {
+            flex: 1;
+            overflow: auto;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #print-area .preview-content img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        #print-area .preview-footer {
+            padding: 16px 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            background: #f3f4f6;
+        }
+        #print-area .preview-btn {
+            min-width: 100px;
+            padding: 10px 16px;
+            font-weight: 900;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+        }
+        #print-area .preview-btn.btn-gold { background: var(--main-gold); color: black; }
+        #print-area .preview-btn.btn-cream { background: var(--sec-cream); color: black; }
+
+        /* Start Screen Styles */
+        #start-screen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 10000;
+            background: linear-gradient(135deg, var(--wood-deep) 0%, var(--wood-medium) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.6s ease-out, visibility 0.6s ease-out;
+        }
+        #start-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        #start-screen-content {
+            text-align: center;
+            animation: slideUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            padding: 40px;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(40px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        #start-screen-title {
+            font-size: 4em;
+            font-weight: 900;
+            color: var(--main-gold);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7), 0 0 20px rgba(212, 175, 55, 0.3);
+            margin-bottom: 30px;
+            letter-spacing: 3px;
+        }
+        #start-screen-subtitle {
+            font-size: 1.2em;
+            color: var(--sec-cream);
+            margin-bottom: 50px;
+            opacity: 0.9;
+        }
+        #start-screen-btn {
+            padding: 18px 60px;
+            font-size: 1.3em;
+            font-weight: 900;
+            background: var(--main-gold);
+            color: black;
+            border: 3px solid var(--sec-cream);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        #start-screen-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 30px rgba(212, 175, 55, 0.6);
+        }
+        #start-screen-btn:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+    <div id="toast" class="error-toast">You must follow the lead suit!</div>
+    <div id="print-area" class="hidden"></div>
+
+    <!-- START SCREEN -->
+    <div id="start-screen" class="" onclick="goToLobby()" style="cursor: pointer;">
+        <video id="start-video" autoplay muted playsinline loop style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: auto; height: 100vh; z-index: 1;">
+            <source src="back%20alley%20gin%20start%20screen.mov" type="video/quicktime">
+        </video>
+    </div>
+
+    <!-- LOBBY -->
+    <div id="lobby-overlay" class="vintage-outer-frame z-lobby hidden">
+        <div class="vintage-inner-inlay">
+            <div class="vintage-felt-content">
+                <div class="logo-container">
+                    <img src="backalleyginbackground%20copy.png" alt="Back Alley Gin" class="w-80 h-auto mx-auto mb-1 drop-shadow-lg">
+                    <div class="suit-divider w-2/3"><span>♠</span> <span>♥</span> <span>♣</span> <span>♦</span></div>
+                </div>
+
+                <div class="bg-hunter-dark border-2 border-cream p-6 rounded-3xl w-full max-sm shadow-2xl overflow-y-auto max-h-[75vh] max-w-sm">
+                    <div class="space-y-2 mt-2">
+                        <div class="flex rounded-lg gap-2">
+                            <button id="mode-single" class="mode-btn btn-3d flex-1 py-2 rounded font-bold text-xs" onclick="setMode('single')">SINGLE</button>
+                            <button id="mode-teams" class="mode-btn btn-3d flex-1 py-2 rounded font-bold text-xs" onclick="setMode('teams')">TEAMS</button>
+                        </div>
+                        <div class="suit-divider"><span>♠</span> <span>♥</span> <span>♣</span> <span>♦</span></div>
+                        <div id="team-name-inputs" class="hidden space-y-2">
+                            <div class="text-[10px] text-[#d4af37] font-bold uppercase tracking-wider">Team Names</div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="text" id="team-name-1" placeholder="Our Team" class="bg-hunter-box border border-white/10 p-2 rounded text-xs text-white" value="Us">
+                                <input type="text" id="team-name-2" placeholder="Opponents" class="bg-hunter-box border border-white/10 p-2 rounded text-xs text-white" value="Them">
+                            </div>
+                        </div>
+                        <div id="player-count-box" class="space-y-2">
+                            <div class="flex rounded-lg gap-2">
+                                <button id="count-2" onclick="setCount(2)" class="count-btn btn-3d flex-1 py-1 rounded font-bold text-xs">2 Players</button>
+                                <button id="count-3" onclick="setCount(3)" class="count-btn btn-3d flex-1 py-1 rounded font-bold text-xs">3 Players</button>
+                                <button id="count-4" onclick="setCount(4)" class="count-btn btn-3d flex-1 py-1 rounded font-bold text-xs">4 Players</button>
+                            </div>
+                        </div>
+                        <div class="suit-divider"><span>♠</span> <span>♥</span> <span>♣</span> <span>♦</span></div>
+                        <div id="player-inputs" class="space-y-2"></div>
+                        <div class="suit-divider"><span>♠</span> <span>♥</span> <span>♣</span> <span>♦</span></div>
+                        
+                        <button id="start-btn" onclick="startGame()" class="w-full btn-gold btn-3d font-black py-3 rounded-xl text-lg transition-all shadow-[0_0_20px_rgba(212,175,55,0.2)] text-3d-dark opacity-50 cursor-not-allowed" disabled>LOADING...</button>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="toggleStats(true)" class="btn-cream btn-3d font-bold py-2 rounded-xl text-sm transition-all uppercase text-3d-dark">Stats</button>
+                            <button onclick="toggleRules(true)" class="btn-cream btn-3d font-bold py-2 rounded-xl text-sm transition-all uppercase text-3d-dark">Rules</button>
+                        </div>
+                        <button onclick="toggleScorecardMenu(true)" class="w-full btn-gold btn-3d font-black py-3 rounded-xl text-sm transition-all uppercase text-3d-dark shadow-[0_0_15px_rgba(212,175,55,0.15)]">Printable Scoresheets</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN TABLE -->
+    <div class="table-frame">
+        <div class="inner-inlay">
+            <div class="game-viewport">
+                <div class="flex justify-between items-start h-24 px-1">
+                    <div class="flex flex-col gap-2">
+                        <button onclick="toggleSettings(true)" class="settings-btn w-fit">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24">
+                                <defs><linearGradient id="woodGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#92400e;stop-opacity:1" /><stop offset="50%" style="stop-color:#b45309;stop-opacity:1" /><stop offset="100%" style="stop-color:#78350f;stop-opacity:1" /></linearGradient></defs>
+                                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" fill="url(#woodGradient)"/>
+                                <circle cx="12" cy="12" r="3" fill="#451a03" opacity="0.4"/>
+                            </svg>
+                        </button>
+                        <div class="info-panel">
+                            <div id="round-txt" class="text-black font-black text-[12px] uppercase tracking-tighter flex items-center gap-1 text-3d-dark">Deal 1</div>
+                            <div class="flex gap-4 w-full justify-center border-t border-black/10 pt-1 mt-1">
+                                <div class="text-center"><div class="text-[7px] text-gray-500 font-bold uppercase">Trump</div><div id="trump-val" class="text-xl font-black leading-none mt-1 suit-black">♠</div></div>
+                                <div class="text-center"><div class="text-[7px] text-gray-500 font-bold uppercase">Lead</div><div id="lead-suit-val" class="text-xl font-black leading-none mt-1 opacity-30">-</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="seat-top" class="flex flex-col items-center flex-1 pt-2">
+                        <div id="p-tag-top" class="status-tag opacity-0">...</div>
+                        <div id="hand-top" class="flex -space-x-12 scale-50 h-6 opacity-30 mt-1"></div>
+                    </div>
+                    <div class="flex flex-col items-end gap-2" style="z-index: 50;">
+                        <div class="side-panel cream-panel rounded-lg p-2 min-w-[110px] flex flex-col">
+                            <div id="score-rows-container" class="space-y-0.5"></div>
+                            <button onclick="toggleHistory(true)" class="log-btn-main text-3d-dark">Game Logs</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between flex-1 px-1">
+                    <div id="seat-left" class="w-16 flex flex-col items-center">
+                        <div id="p-tag-left" class="status-tag mb-2 opacity-0">...</div>
+                        <div id="hand-left" class="flex flex-col -space-y-16 scale-50 opacity-20"></div>
+                    </div>
+                    <div class="table-center">
+                        <div id="trick-pile" class="absolute inset-0 flex items-center justify-center"></div>
+                        <div id="deck-container" class="deck-stack hidden"></div>
+                        <button id="confirm-btn" class="btn-3d text-3d-dark" onclick="confirmPlay()">Play Card</button>
+                        <div id="winner-ticker" class="absolute bottom-2 left-0 right-0 text-[#d4af37] text-[10px] font-black text-center uppercase tracking-widest pointer-events-none text-3d-gold"></div>
+                        <div id="bid-panel" class="hidden">
+                            <div class="text-[8px] text-white/40 uppercase tracking-widest mb-1">Table Bids</div>
+                            <div id="table-bids-list" class="bg-hunter-box/50 rounded-lg p-2 mb-3 border border-white/5 flex justify-between gap-2"></div>
+                            <div class="text-[#d4af37] font-black text-xs uppercase mb-2 text-3d-gold" id="bid-title">Your Bid</div>
+                            <button id="ready-bid-btn" class="w-full btn-gold btn-3d font-black py-4 rounded-lg text-sm uppercase mb-2 shadow-lg hidden text-3d-dark" onclick="revealBiddingGrid()">Ready to Bid</button>
+                            <div id="bid-grid" class="grid grid-cols-4 gap-1 max-h-40 overflow-y-auto mb-3"></div>
+                            <button id="confirm-bid-btn" class="w-full btn-gold btn-3d font-black py-2 rounded-lg text-xs uppercase hidden text-3d-dark" onclick="confirmBid()">Confirm Bid</button>
+                        </div>
+                    </div>
+                    <div id="seat-right" class="w-16 flex flex-col items-center">
+                        <div id="p-tag-right" class="status-tag mb-2 opacity-0">...</div>
+                        <div id="hand-right" class="flex flex-col -space-y-16 scale-50 opacity-20"></div>
+                    </div>
+                </div>
+
+                <div class="hand-container">
+                    <div id="p-tag-bottom" class="status-tag absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full z-10">You</div>
+                    <div id="hand-bottom" class="player-hand"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAUSE & RESULTS (Z-PAUSE) -->
+    <div id="settings-overlay" class="vintage-outer-frame z-pause hidden">
+        <div class="vintage-inner-inlay">
+            <div class="vintage-felt-content">
+                <div class="logo-container scale-[0.75] mb-2">
+                    <img src="backalleyginbackground%20copy.png" alt="Back Alley Gin" class="w-64 h-auto mx-auto mb-0 drop-shadow-lg">
+                    <div class="suit-divider w-1/2 mx-auto"><span>♠</span> <span>♥</span> <span>♣</span> <span>♦</span></div>
+                </div>
+                <div class="bg-hunter-dark border-2 border-cream p-5 rounded-3xl w-full max-sm max-w-[320px] text-center shadow-2xl overflow-y-auto max-h-[85vh]">
+                    <h3 class="text-xl font-black text-3d-gold mb-3 italic uppercase">Pause Menu</h3>
+                    
+                    <div id="settings-ai-list" class="space-y-1.5 mb-4 text-left"></div>
+                    
+                    <div class="text-[10px] text-[#d4af37] font-bold uppercase mb-1.5 text-left ml-1">Game Settings</div>
+                    <div id="game-settings-list" class="space-y-1.5 mb-4 text-left"></div>
+
+                    <div class="space-y-1.5">
+                        <button onclick="toggleRules(true)" class="w-full btn-cream btn-3d font-bold py-3 rounded-xl text-xs uppercase border border-white/10 text-3d-dark">View Rules</button>
+                        <button onclick="resetAndRestart()" class="w-full bg-blue-900/40 text-blue-400 font-bold py-3 rounded-xl text-xs uppercase border border-blue-500/30">Restart Game</button>
+                        <button onclick="quitToLobby()" class="w-full bg-red-900/40 text-red-400 font-bold py-3 rounded-xl text-xs uppercase border border-red-500/30">Quit to Lobby</button>
+                        <button onclick="toggleSettings(false)" class="w-full btn-gold btn-3d font-black py-3 rounded-xl text-xs uppercase text-3d-dark mt-2">Resume</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal" class="vintage-outer-frame z-pause hidden">
+        <div class="vintage-inner-inlay">
+            <div class="vintage-felt-content">
+                <div class="logo-container scale-75 mb-0">
+                    <img src="backalleyginbackground%20copy.png" alt="Back Alley Gin" class="w-64 h-auto mx-auto mb-0 drop-shadow-lg">
+                    <div class="suit-divider w-1/2 mx-auto"><span>♠</span> <span>♥</span> <span>♣</span> <span>♦</span></div>
+                </div>
+                <div class="bg-hunter-dark border-2 border-cream p-6 rounded-3xl w-full max-sm max-w-xs text-center shadow-2xl">
+                    <h3 class="text-xl font-black text-3d-gold mb-2 italic uppercase">Results</h3>
+                    <div id="final-announcement" class="text-[#d4af37] text-xl font-black uppercase tracking-widest mb-2 hidden text-3d-gold animate-victory">Victory!</div>
+                    <div class="bg-hunter-box/50 p-3 rounded-xl border border-white/5 text-[11px] mb-4 shadow-inner">
+                        <div class="text-[8px] text-emerald-200/50 uppercase tracking-widest mb-2 border-b border-white/5 pb-1">This Round</div>
+                        <div id="summary" class="text-left space-y-1 mb-2"></div>
+                        <div id="total-scoreboard" class="hidden"><div id="total-scores-list" class="text-left space-y-1"></div></div>
+                    </div>
+                    <div class="space-y-1.5">
+                        <button id="btn-next-deal" class="btn-gold btn-3d font-black py-3 w-full rounded-xl uppercase text-sm shadow-[0_0_15px_rgba(212,175,55,0.2)] text-3d-dark">Next Deal</button>
+                        <div id="end-game-buttons" class="hidden space-y-1.5">
+                            <button onclick="toggleHistory(true)" class="btn-cream btn-3d font-black py-3 w-full rounded-xl uppercase text-sm text-3d-dark">Full Game Logs</button>
+                            <button onclick="resetAndRestart()" class="btn-gold btn-3d font-black py-3 w-full rounded-xl uppercase text-sm text-3d-dark">Play Again</button>
+                            <button onclick="quitToLobby()" class="w-full bg-red-900/40 text-red-400 font-bold py-3 w-full rounded-xl uppercase text-xs border border-red-500/30">Quit to Lobby</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INFO SCREENS (Z-INFO) -->
+    <div id="rules-overlay" class="vintage-outer-frame z-info hidden">
+        <div class="vintage-inner-inlay">
+            <div class="vintage-felt-content">
+                <div class="bg-hunter-dark border-2 border-cream p-6 rounded-3xl w-full max-sm shadow-2xl flex flex-col max-h-[90vh] max-w-sm">
+                    <h2 class="text-xl font-black text-3d-gold text-center mb-4 uppercase italic">Back Alley Gin Rules</h2>
+                    <div class="rules-content overflow-y-auto flex-1 pr-2 text-left text-[11px] text-emerald-100/70 space-y-4">
+                        <div>
+                            <b class="text-[#d4af37] block uppercase text-[10px] tracking-widest mb-1">Objective</b>
+                            <p>Accumulate the highest points at the end of the 25 hands to win.</p>
+                        </div>
+                        <div>
+                            <b class="text-[#d4af37] block uppercase text-[10px] tracking-widest mb-1">The Deal</b>
+                            <p>The person who selects the highest card from the deck deals first. For the first hand each player is dealt 1 card, increase each hand by 1 card until you reach a hand of 13 cards. Then decrease 1 card per hand until you are back to 1 card.</p>
+                        </div>
+                        <div>
+                            <b class="text-[#d4af37] block uppercase text-[10px] tracking-widest mb-1">Trump Cards</b>
+                            <p>Spades are always Trump. The Big Joker (BJ) is the highest trump card followed by the Small Joker (SJ), then the Ace, King, etc.</p>
+                        </div>
+                        <div>
+                            <b class="text-[#d4af37] block uppercase text-[10px] tracking-widest mb-1">Following Suit</b>
+                            <p>You must always follow the lead suit. If you are void in that suit, it’s the perfect opportunity to play a trump card.</p>
+                        </div>
+                        <div>
+                            <b class="text-[#d4af37] block uppercase text-[10px] tracking-widest mb-1">Bidding</b>
+                            <p>Calculate the tricks (hands) you think you can make based on the strength of your hand.</p>
+                        </div>
+                        <div>
+                            <b class="text-[#d4af37] block uppercase text-[10px] tracking-widest mb-1">Scoring</b>
+                            <p>Each bid is worth 4 points. If you exceed your bid, add 1 point for every trick made over your bid. If you miss your bid – deduct 4 points per bid.</p>
+                        </div>
+                        <div>
+                            <b class="text-[#d4af37] block uppercase text-[10px] tracking-widest mb-1">CPU Personalities</b>
+                            <p>CPU players can be toggled between "Normal" and "Aggressive" in the settings. Aggressive bots bid more frequently and play high trump cards earlier.</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleRules(false)" class="mt-4 w-full btn-cream btn-3d font-black py-3 rounded-xl text-sm uppercase text-3d-dark">Got it</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="stats-overlay" class="vintage-outer-frame z-info hidden">
+        <div class="vintage-inner-inlay">
+            <div class="vintage-felt-content">
+                <div class="logo-container scale-75 mb-0">
+                    <img src="backalleyginbackground%20copy.png" alt="Back Alley Gin" class="w-64 h-auto mx-auto mb-0 drop-shadow-lg">
+                    <div class="suit-divider w-1/2 mx-auto"><span>♠</span> <span>♥</span> <span>♣</span> <span>♦</span></div>
+                </div>
+                <div class="bg-hunter-dark border-2 border-cream p-6 rounded-3xl w-full max-sm shadow-2xl flex flex-col max-h-[95vh] max-w-sm">
+                    <h2 class="text-xl font-black text-3d-gold text-center mb-4 uppercase italic">Career Statistics</h2>
+                    <div class="flex-1 overflow-y-auto space-y-6 pr-2">
+                        <div>
+                            <h3 class="text-[#d4af37] text-[10px] font-black uppercase tracking-[0.2em] mb-2 border-l-4 border-[#d4af37] pl-2">Single Player</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="stat-card"><div class="text-[8px] text-emerald-100/50 uppercase">Played</div><div id="stat-s-played" class="text-lg font-black text-white">0</div></div>
+                                <div class="stat-card"><div class="text-[8px] text-emerald-100/50 uppercase">Won</div><div id="stat-s-won" class="text-lg font-black text-green-400">0</div></div>
+                                <div class="stat-card"><div class="text-[8px] text-emerald-100/50 uppercase">Highest Points</div><div id="stat-s-points" class="text-lg font-black text-[#d4af37]">0</div></div>
+                                <div class="stat-card"><div class="text-[8px] text-emerald-100/50 uppercase">Win Rate</div><div id="stat-s-rate" class="text-lg font-black text-blue-400">0%</div></div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-[#fdf6e3] text-[10px] font-black uppercase tracking-[0.2em] mb-2 border-l-4 border-[#fdf6e3] pl-2">Team Mode</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="stat-card"><div class="text-[8px] text-emerald-100/50 uppercase">Played</div><div id="stat-t-played" class="text-lg font-black text-white">0</div></div>
+                                <div class="stat-card"><div class="text-[8px] text-emerald-100/50 uppercase">Won</div><div id="stat-t-won" class="text-lg font-black text-green-400">0</div></div>
+                                <div class="stat-card"><div class="text-[8px] text-emerald-100/50 uppercase">Highest Points</div><div id="stat-t-points" class="text-lg font-black text-[#d4af37]">0</div></div>
+                                <div class="stat-card"><div class="text-[8px] text-emerald-100/50 uppercase">Win Rate</div><div id="stat-t-rate" class="text-lg font-black text-blue-400">0%</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="toggleStats(false)" class="mt-4 w-full btn-gold btn-3d font-black py-3 rounded-xl text-sm uppercase text-3d-dark">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="history-overlay" class="vintage-outer-frame z-info hidden">
+        <div class="vintage-inner-inlay">
+            <div class="vintage-felt-content">
+                <div class="logo-container scale-75 mb-0">
+                    <img src="backalleyginbackground%20copy.png" alt="Back Alley Gin" class="w-64 h-auto mx-auto mb-0 drop-shadow-lg">
+                    <div class="suit-divider w-1/2 mx-auto"><span>♠</span> <span>♥</span> <span>♣</span> <span>♦</span></div>
+                </div>
+                <div class="bg-hunter-dark border-2 border-cream p-5 rounded-3xl w-full max-sm max-w-md shadow-2xl flex flex-col max-h-[70vh]">
+                    <h3 class="text-xl font-black text-3d-gold mb-4 italic uppercase text-center">Game Logs</h3>
+                    <div id="history-scroll" class="overflow-y-auto flex-1 pr-1">
+                        <table class="history-table bg-transparent rounded-lg overflow-hidden"><thead id="history-head"></thead><tbody id="history-body"></tbody></table>
+                    </div>
+                    <button onclick="toggleHistory(false)" class="mt-4 w-full btn-gold btn-3d font-black py-3 rounded-xl text-xs uppercase text-3d-dark">Back to Game</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="scorecard-overlay" class="vintage-outer-frame z-info hidden">
+        <div class="vintage-inner-inlay">
+            <div class="vintage-felt-content">
+                <div class="logo-container scale-75 mb-0">
+                    <img src="backalleyginbackground%20copy.png" alt="Back Alley Gin" class="w-64 h-auto mx-auto mb-0 drop-shadow-lg">
+                    <div class="suit-divider w-1/2 mx-auto"><span>♠</span> <span>♥</span> <span>♣</span> <span>♦</span></div>
+                </div>
+                <div class="bg-hunter-dark border-2 border-cream p-6 rounded-3xl w-full max-sm shadow-2xl flex flex-col max-h-[95vh] max-w-sm">
+                    <h2 class="text-xl font-black text-3d-gold text-center mb-4 uppercase italic">Print Scoresheets</h2>
+                    <div class="bg-hunter-box/40 p-4 rounded-2xl border border-white/5 mb-6 text-center">
+                        <p class="text-[11px] leading-relaxed font-medium italic text-emerald-100/80">
+                            If you’ve opened this page, I hope it means you’re enjoying the game enough to take it to your own table. These are the original scoresheets my family has used for decades. I’ve always found them to be perfect for the game, and I’m honored to share a piece of our tradition with you, your friends, and your family.
+                        </p>
+                    </div>
+                    <div class="space-y-2 overflow-y-auto pr-1">
+                        <div class="bg-hunter-box p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                            <div><div class="text-[#d4af37] text-xs font-black uppercase">Solo Scoresheet</div></div>
+                            <button onclick="previewScorecard('solo')" class="btn-gold btn-3d px-4 py-2 rounded-lg text-xs font-black uppercase text-3d-dark">Preview</button>
+                        </div>
+                        <div class="bg-hunter-box p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                            <div><div class="text-[#d4af37] text-xs font-black uppercase">Teams Scoresheet</div></div>
+                            <button onclick="previewScorecard('teams')" class="btn-gold btn-3d px-4 py-2 rounded-lg text-xs font-black uppercase text-3d-dark">Preview</button>
+                        </div>
+                    </div>
+                    <button onclick="toggleScorecardMenu(false)" class="mt-4 w-full btn-cream btn-3d font-black py-3 rounded-xl text-sm uppercase text-3d-dark">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const SUITS = ['♠', '♥', '♣', '♦'], RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'], TRUMP = '♠';
+        
+        // Asset resolver + Sound effect functions using audio files
+        window.audioCache = {};
+
+        function resolveAsset(path) {
+            try { return encodeURI(path); } catch (e) { return path; }
+        }
+        
+        function playAudioFile(filename, volume = 0.3) {
+            if (!window.s.soundEnabled) return;
+            try {
+                const audio = new Audio(resolveAsset(filename));
+                audio.volume = volume;
+                audio.play().catch(e => console.log('Audio play error:', e));
+            } catch(e) { console.log('Audio error:', e); }
+        }
+        
+        function playShuffle() {
+            if (!window.s.soundEnabled) return;
+            playAudioFile('shuffle.mp3');
+        }
+        
+        function playDeal() {
+            if (!window.s.soundEnabled) return;
+            playAudioFile('deal.mp3');
+        }
+        
+        function playThud() {
+            if (!window.s.soundEnabled) return;
+            playAudioFile('thud.mp3', 0.15);
+        }
+        
+        window.s = {
+            gameStarted: false, mode: 'single', playerCount: 4, round: 0,
+            sizes: [1,2,3,4,5,6,7,8,9,10,11,12,13,12,11,10,9,8,7,6,5,4,3,2,1],
+            p: [], dealer: 0, hands: [], bids: [], won: [], turn: 0, trick: [], led: null, phase: 'idle', isAnimating: false,
+            styles: ['human', 'normal', 'normal', 'normal'], selectedIdx: -1,
+            teamNames: ["Us", "Them"], pendingBid: null,
+            history: [],
+            stats: { single: { gamesPlayed: 0, gamesWon: 0, highestPoints: 0 }, teams: { gamesPlayed: 0, gamesWon: 0, highestPoints: 0 } },
+            currentUser: null,
+            soundEnabled: true
+        };
+
+        let firebaseEnabled = false;
+        let app = null, auth = null, db = null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        try {
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                firebaseEnabled = true;
+            } else {
+                console.warn('No firebase config provided — Firebase disabled.');
+            }
+        } catch (e) { console.warn('Firebase init error:', e); firebaseEnabled = false; }
+
+        const initAuth = async () => {
+            if (!firebaseEnabled) return;
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) { 
+                console.warn('Auth init error:', e); 
+                firebaseEnabled = false;
+                const startBtn = document.getElementById('start-btn');
+                if (startBtn) {
+                    startBtn.innerText = 'START GAME';
+                    startBtn.disabled = false;
+                    startBtn.classList.remove('opacity-50','cursor-not-allowed');
+                }
+            }
+        };
+
+        if (firebaseEnabled) {
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    window.s.currentUser = user;
+                    await loadStats();
+                    const startBtn = document.getElementById('start-btn');
+                    if (startBtn) {
+                        startBtn.innerText = "START GAME";
+                        startBtn.disabled = false;
+                        startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                } else {
+                    const startBtn = document.getElementById('start-btn');
+                    if (startBtn) {
+                        startBtn.innerText = "START GAME";
+                        startBtn.disabled = false;
+                        startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                }
+            });
+            initAuth();
+        }
+
+        async function loadStats() {
+            if (!firebaseEnabled || !window.s.currentUser) return;
+            try {
+                const statsDoc = doc(db, 'artifacts', appId, 'users', window.s.currentUser.uid, 'stats', 'careerStats');
+                const snap = await getDoc(statsDoc);
+                if (snap.exists()) { 
+                    window.s.stats = snap.data();
+                    // normalize older schema that used totalPoints -> convert to highestPoints if missing
+                    try {
+                        if (window.s.stats.single) {
+                            if (typeof window.s.stats.single.highestPoints === 'undefined' && typeof window.s.stats.single.totalPoints !== 'undefined') {
+                                window.s.stats.single.highestPoints = window.s.stats.single.totalPoints;
+                            }
+                        }
+                        if (window.s.stats.teams) {
+                            if (typeof window.s.stats.teams.highestPoints === 'undefined' && typeof window.s.stats.teams.totalPoints !== 'undefined') {
+                                window.s.stats.teams.highestPoints = window.s.stats.teams.totalPoints;
+                            }
+                        }
+                    } catch (e) { console.warn('Stats normalization error', e); }
+                }
+            } catch (e) { console.error("Error loading stats:", e); }
+        }
+
+        async function saveStats() {
+            if (!firebaseEnabled || !window.s.currentUser) return;
+            try {
+                const statsDoc = doc(db, 'artifacts', appId, 'users', window.s.currentUser.uid, 'stats', 'careerStats');
+                await setDoc(statsDoc, window.s.stats);
+            } catch (e) { console.error("Error saving stats:", e); }
+        }
+
+        window.setMode = (m) => {
+            window.s.mode = m;
+            document.getElementById('mode-single').className = (m === 'single' ? 'btn-gold' : 'btn-grey') + ' mode-btn btn-3d flex-1 py-2 rounded font-bold text-xs';
+            document.getElementById('mode-teams').className = (m === 'teams' ? 'btn-gold' : 'btn-grey') + ' mode-btn btn-3d flex-1 py-2 rounded font-bold text-xs';
+            if (m === 'teams') { window.setCount(4); document.getElementById('player-count-box').classList.add('hidden'); document.getElementById('team-name-inputs').classList.remove('hidden'); } 
+            else { document.getElementById('player-count-box').classList.remove('hidden'); document.getElementById('team-name-inputs').classList.add('hidden'); }
+        };
+
+        window.setCount = (n) => { 
+            window.s.playerCount = n; window.s.p = []; renderInputs(); 
+            document.querySelectorAll('.count-btn').forEach(b => {
+                b.className = (b.id === `count-${n}` ? 'btn-gold' : 'btn-grey') + ' count-btn btn-3d flex-1 py-1 rounded font-bold text-xs';
+            }); 
+        };
+
+        window.startGame = () => {
+            window.s.gameStarted = true; window.s.p = []; window.s.history = [];
+            for(let i=0; i<window.s.playerCount; i++) { window.s.p.push({ id: i, name: document.getElementById(`p-name-${i}`).value || getDefaultName(i), score: 0 }); }
+            if(window.s.mode === 'teams') window.s.teamNames = [document.getElementById('team-name-1').value || "Us", document.getElementById('team-name-2').value || "Them"];
+            document.getElementById('lobby-overlay').classList.add('hidden'); startRound();
+        };
+
+        window.toggleStats = (show) => {
+            const el = document.getElementById('stats-overlay');
+            if (show) {
+                const s = window.s.stats.single || { gamesPlayed: 0, gamesWon: 0, highestPoints: 0 };
+                document.getElementById('stat-s-played').innerText = s.gamesPlayed;
+                document.getElementById('stat-s-won').innerText = s.gamesWon;
+                document.getElementById('stat-s-points').innerText = s.highestPoints || 0;
+                document.getElementById('stat-s-rate').innerText = (s.gamesPlayed > 0 ? Math.round((s.gamesWon / s.gamesPlayed) * 100) : 0) + '%';
+                const t = window.s.stats.teams || { gamesPlayed: 0, gamesWon: 0, highestPoints: 0 };
+                document.getElementById('stat-t-played').innerText = t.gamesPlayed;
+                document.getElementById('stat-t-won').innerText = t.gamesWon;
+                document.getElementById('stat-t-points').innerText = t.highestPoints || 0;
+                document.getElementById('stat-t-rate').innerText = (t.gamesPlayed > 0 ? Math.round((t.gamesWon / t.gamesPlayed) * 100) : 0) + '%';
+                el.classList.remove('hidden');
+            } else el.classList.add('hidden');
+        };
+
+        window.toggleScorecardMenu = (show) => { const el = document.getElementById('scorecard-overlay'); if (show) el.classList.remove('hidden'); else el.classList.add('hidden'); };
+        window.previewScorecard = (type) => {
+            const area = document.getElementById('print-area');
+            const src = type === 'solo' ? 'score-sheet-solo.jpeg' : 'score-sheet-teams.jpeg';
+            area.dataset.previewSrc = src;
+            area.innerHTML = `
+                <div class="preview-modal">
+                    <div class="preview-content"><img src="${src}" alt="Back Alley Gin ${type === 'solo' ? 'Solo' : 'Teams'} Score Sheet"></div>
+                    <div class="preview-footer">
+                        <button class="preview-btn btn-cream" onclick="closeScorePreview()">Close</button>
+                        <button class="preview-btn btn-cream" onclick="downloadScorePreview()">Save</button>
+                        <button class="preview-btn btn-gold" onclick="window.print()">Print</button>
+                    </div>
+                </div>
+            `;
+            area.classList.remove('hidden');
+            area.classList.add('visible');
+        };
+        window.closeScorePreview = () => {
+            const area = document.getElementById('print-area');
+            area.classList.remove('visible');
+            area.classList.add('hidden');
+            area.innerHTML = '';
+            delete area.dataset.previewSrc;
+        };
+        window.downloadScorePreview = () => {
+            const area = document.getElementById('print-area');
+            const src = area.dataset.previewSrc;
+            if (!src) return;
+            const link = document.createElement('a');
+            link.href = src;
+            link.download = src.split('/').pop();
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        };
+
+        window.toggleRules = (show) => { const el = document.getElementById('rules-overlay'); if (show) el.classList.remove('hidden'); else el.classList.add('hidden'); };
+        
+        window.toggleSettings = (show) => {
+            const el = document.getElementById('settings-overlay');
+            if (show) {
+                // Render Bot List
+                const aiList = document.getElementById('settings-ai-list');
+                aiList.innerHTML = `<div class="text-[10px] text-[#d4af37] font-bold uppercase mb-1.5 ml-1">Bot Personalities</div>`;
+                for(let i=1; i<window.s.playerCount; i++) {
+                    aiList.innerHTML += `
+                        <div class="flex justify-between items-center bg-hunter-box p-1.5 rounded-lg mb-1 border border-white/5">
+                            <span class="text-[11px] font-bold text-white/80 ml-1">${window.s.p[i] ? window.s.p[i].name : getDefaultName(i)}</span>
+                            <button onclick="toggleStyle(${i}); toggleSettings(true)" class="style-btn btn-3d ${window.s.styles[i]==='aggro'?'style-aggro':'style-normal'} scale-[0.75] origin-right">
+                                ${window.s.styles[i] === 'aggro' ? 'AGGRESSIVE' : 'NORMAL'}
+                            </button>
+                        </div>`;
+                }
+
+                // Render Sound Toggle
+                const gameSettingsList = document.getElementById('game-settings-list');
+                gameSettingsList.innerHTML = `
+                    <div class="flex justify-between items-center bg-hunter-box p-1.5 rounded-lg mb-1 border border-white/5">
+                        <span class="text-[11px] font-bold text-white/80 ml-1">SOUND EFFECTS</span>
+                        <button onclick="toggleSound(); toggleSettings(true)" class="style-btn btn-3d ${window.s.soundEnabled ? 'btn-gold text-black' : 'btn-grey text-white'} scale-[0.75] origin-right">
+                            ${window.s.soundEnabled ? 'ON' : 'OFF'}
+                        </button>
+                    </div>
+                `;
+                el.classList.remove('hidden');
+            } else el.classList.add('hidden');
+        };
+
+        window.toggleSound = () => {
+            window.s.soundEnabled = !window.s.soundEnabled;
+        };
+
+        window.toggleStyle = (i) => { window.s.styles[i] = (window.s.styles[i] === 'normal') ? 'aggro' : 'normal'; renderInputs(); };
+        window.confirmPlay = () => {
+            if (window.s.selectedIdx === -1) return;
+            const i = window.s.selectedIdx; const c = window.s.hands[0][i]; window.s.selectedIdx = -1;
+            document.getElementById('confirm-btn').classList.remove('visible');
+            window.s.hands[0].splice(i, 1); doMove(0, c);
+        };
+
+        function updateBidSummaryUI() {
+            const listEl = document.getElementById('table-bids-list');
+            if (!listEl) return;
+            listEl.innerHTML = '';
+            for(let i=1; i<window.s.playerCount; i++) {
+                const bid = window.s.bids[i];
+                const name = window.s.p[i] ? window.s.p[i].name : getDefaultName(i);
+                const item = document.createElement('div');
+                item.className = "bid-summary-item";
+                item.innerHTML = `
+                    <span class="text-[#d4af37] text-[8px] font-bold uppercase tracking-tighter truncate w-16 text-center">${name}</span>
+                    <span class="text-[#fdf6e3] font-black text-xs">${bid !== null ? bid : '?'}</span>
+                `;
+                listEl.appendChild(item);
+            }
+        }
+
+        window.revealBiddingGrid = () => {
+            const curSize = window.s.sizes[window.s.round % window.s.sizes.length];
+            const g = document.getElementById('bid-grid');
+            g.innerHTML = ''; document.getElementById('ready-bid-btn').classList.add('hidden'); document.getElementById('confirm-bid-btn').classList.add('hidden');
+            g.classList.remove('hidden');
+            let max = curSize;
+            if (window.s.mode === 'teams' && window.s.bids[2] !== null) { 
+                max = Math.max(0, curSize - window.s.bids[2]); 
+                document.getElementById('bid-title').innerText = `Partner bid ${window.s.bids[2]}. Pick remaining:`; 
+            } else document.getElementById('bid-title').innerText = `Your Bid`;
+            for(let i=0; i<=max; i++) {
+                const b = document.createElement('button'); b.className = "bid-btn btn-3d"; b.innerText= i; b.id = `bid-val-${i}`;
+                b.onclick=()=> selectBid(i); g.appendChild(b);
+            }
+            updateBidSummaryUI(); 
+        };
+        window.selectBid = (v) => {
+            window.s.pendingBid = v; document.querySelectorAll('.bid-btn').forEach(b => b.classList.remove('selected'));
+            const selectedBtn = document.getElementById(`bid-val-${v}`); if (selectedBtn) selectedBtn.classList.add('selected');
+            document.getElementById('confirm-bid-btn').classList.remove('hidden');
+        };
+        window.confirmBid = () => { 
+            if (window.s.pendingBid !== null) { 
+                const v = window.s.pendingBid; window.s.pendingBid = null; 
+                document.getElementById('bid-panel').classList.add('hidden'); document.getElementById('confirm-bid-btn').classList.add('hidden');
+                resolveBid(v); 
+            } 
+        };
+        window.resetAndRestart = () => {
+            window.s.round = 0; window.s.dealer = 0; window.s.p.forEach(p => p.score = 0); window.s.history = [];
+            document.getElementById('modal').classList.add('hidden'); document.getElementById('settings-overlay').classList.add('hidden');
+            toggleHistory(false); document.getElementById('total-scoreboard').classList.add('hidden'); document.getElementById('final-announcement').classList.add('hidden');
+            startRound();
+        };
+        window.quitToLobby = () => {
+            window.s.gameStarted = false; window.s.round = 0; window.s.dealer = 0; window.s.phase = 'idle'; window.s.history = [];
+            document.getElementById('settings-overlay').classList.add('hidden'); document.getElementById('modal').classList.add('hidden');
+            toggleHistory(false); document.getElementById('lobby-overlay').classList.remove('hidden');
+            document.getElementById('trick-pile').innerHTML = ''; document.getElementById('hand-bottom').innerHTML = '';
+            document.getElementById('bid-panel').classList.add('hidden'); document.getElementById('p-tag-bottom').style.opacity = '0';
+            renderInputs();
+        };
+        window.toggleHistory = (show) => {
+            const overlay = document.getElementById('history-overlay');
+            if (show) { renderHistory(); overlay.classList.remove('hidden'); } else overlay.classList.add('hidden');
+        };
+
+        const isRedSuit = (suit) => suit === '♥' || suit === '♦';
+        const getSuitColorClass = (suit) => isRedSuit(suit) ? 'text-red-600' : 'text-black';
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            if (t) { t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
+        }
+        const getEffectiveSuit = (card) => card.suit === 'JOKER' ? TRUMP : card.suit;
+        function getSeatPos(pIdx) { const seats = { 2: ['bottom', 'top'], 3: ['bottom', 'left', 'right'], 4: ['bottom', 'left', 'top', 'right'] }; return seats[window.s.playerCount][pIdx]; }
+        function getDefaultName(pIdx) { if (pIdx === 0) return "You"; const pos = getSeatPos(pIdx); switch(pos) { case 'top': return "North"; case 'left': return "West"; case 'right': return "East"; default: return `Bot ${pIdx}`; } }
+        
+        function getCardStyle(pIdx) {
+            const seat = getSeatPos(pIdx); const base = "transform-origin: center;";
+            switch(seat) {
+                case 'bottom': return base + "top: 65%; left: 50%; transform: translate(-50%, -50%) scale(0.95);";
+                case 'top':    return base + "top: 35%; left: 50%; transform: translate(-50%, -50%) rotate(180deg) scale(0.95);";
+                case 'left':   return base + "top: 50%; left: 35%; transform: translate(-50%, -50%) rotate(90deg) scale(0.95);";
+                case 'right':  return base + "top: 50%; left: 65%; transform: translate(-50%, -50%) rotate(-90deg) scale(0.95);";
+            }
+        }
+
+        function renderInputs() {
+            const cont = document.getElementById('player-inputs'); cont.innerHTML = '';
+            for(let i=0; i<window.s.playerCount; i++) {
+                const div = document.createElement('div'); div.className = "flex gap-2 items-center mb-1";
+                div.innerHTML = `<input type="text" id="p-name-${i}" class="flex-1 bg-hunter-box border border-white/5 p-2 rounded text-xs text-white" value="${window.s.p[i]?.name || getDefaultName(i)}">${i > 0 ? `<button onclick="toggleStyle(${i})" id="style-btn-${i}" class="style-btn btn-3d ${window.s.styles[i]==='aggro'?'style-aggro':'style-normal'}">${window.s.styles[i] === 'aggro' ? 'AGGRESSIVE' : 'NORMAL'}</button>` : ''}`;
+                cont.appendChild(div);
+            }
+        }
+        function sortHand(hand) {
+            const suitOrder = { 'JOKER': 0, '♠': 1, '♥': 2, '♣': 3, '♦': 4 };
+            hand.sort((a, b) => {
+                const suitA = a.suit === 'JOKER' ? 'JOKER' : a.suit; const suitB = b.suit === 'JOKER' ? 'JOKER' : b.suit;
+                if (suitOrder[suitA] !== suitOrder[suitB]) return suitOrder[suitA] - suitOrder[suitB];
+                return getPower(b) - getPower(a);
+            });
+        }
+        async function startRound() {
+            window.s.isAnimating = true; window.s.selectedIdx = -1; window.s.pendingBid = null;
+            document.getElementById('confirm-btn').classList.remove('visible'); document.getElementById('bid-panel').classList.add('hidden');
+            document.getElementById('ready-bid-btn').classList.remove('hidden'); document.getElementById('bid-grid').classList.add('hidden');
+            document.getElementById('confirm-bid-btn').classList.add('hidden');
+            document.getElementById('end-game-buttons').classList.add('hidden');
+            document.getElementById('final-announcement').classList.add('hidden');
+            document.getElementById('total-scoreboard').classList.add('hidden');
+            const size = window.s.sizes[window.s.round % window.s.sizes.length];
+            document.getElementById('round-txt').innerHTML = `Deal ${size}${window.s.round >= 13 ? ' <span class="text-xs text-hunter-green">↓</span>' : ''}`;
+            document.getElementById('trick-pile').innerHTML = ''; document.getElementById('hand-bottom').innerHTML = '';
+            window.s.hands = Array.from({length: window.s.playerCount}, () => []); window.s.won = new Array(window.s.playerCount).fill(0);
+            window.s.bids = new Array(window.s.playerCount).fill(null); window.s.trick = []; window.s.led = null;
+            updateLeadUI(); updateStatus(); updatePermanentScores();
+            const deck = []; SUITS.forEach(st => RANKS.forEach(r => deck.push({suit: st, rank: r, val: RANKS.indexOf(r)})));
+            deck.push({suit: 'JOKER', rank: 'BJ', val: 100}, {suit: 'JOKER', rank: 'SJ', val: 99});
+            deck.sort(() => Math.random() - 0.5); await performShuffleAndDeal(deck, size);
+        }
+        async function performShuffleAndDeal(deck, size) {
+            const deckContainer = document.getElementById('deck-container'); deckContainer.innerHTML = ''; deckContainer.classList.remove('hidden');
+            for(let i=0; i<8; i++) { const d = document.createElement('div'); d.className = "deck-card card card-back"; d.style.top = `-${i}px`; d.style.left = `-${i}px`; deckContainer.appendChild(d); }
+            deckContainer.classList.add('shuffling'); playShuffle(); await new Promise(r => setTimeout(r, 1200)); deckContainer.classList.remove('shuffling');
+            for(let i=0; i<size; i++) {
+                for(let p=0; p<window.s.playerCount; p++) {
+                    const cardData = deck.pop(); window.s.hands[p].push(cardData);
+                    const dealCard = document.createElement('div'); dealCard.className = "card card-back absolute z-[100] transition-all duration-300 ease-out";
+                    const rect = deckContainer.getBoundingClientRect(); dealCard.style.top = `${rect.top}px`; dealCard.style.left = `${rect.left}px`; dealCard.style.position = 'fixed'; document.body.appendChild(dealCard);
+                    const targetSeat = getSeatPos(p); const targetRect = document.getElementById(`p-tag-${targetSeat}`).getBoundingClientRect();
+                    await new Promise(r => requestAnimationFrame(r));
+                    dealCard.style.top = `${targetRect.top}px`; dealCard.style.left = `${targetRect.left}px`; dealCard.style.transform = "scale(0.2) opacity(0)";
+                    playDeal();
+                    setTimeout(() => { dealCard.remove(); if (p === 0) { sortHand(window.s.hands[0]); renderHands(); } else { const handEl = document.getElementById(`hand-${getSeatPos(p)}`); if (handEl) { const b = document.createElement('div'); b.className = "card card-back w-6 h-8"; handEl.appendChild(b); } } }, 350);
+                    await new Promise(r => setTimeout(r, 40));
+                }
+            }
+            deckContainer.classList.add('hidden'); playThud(); window.s.isAnimating = false; startBidding();
+        }
+        function renderHands() {
+            const cont = document.getElementById('hand-bottom'); cont.innerHTML = ''; const cardCount = window.s.hands[0].length;
+            const fanSpread = Math.min(cardCount * 12, 100); const step = fanSpread / (cardCount > 1 ? cardCount - 1 : 1); const startAngle = -fanSpread / 2;
+            window.s.hands[0].forEach((card, i) => {
+                const wrapper = document.createElement('div'); wrapper.className = `fan-card ${window.s.selectedIdx === i ? 'selected' : ''}`;
+                const angle = startAngle + (step * i); const tx = angle * 0.8, ty = Math.abs(angle) * 0.2;
+                wrapper.style.transform = `translateX(${tx}px) translateY(${ty}px) rotate(${angle}deg)`;
+                wrapper.style.setProperty('--hover-tx', `${tx}px`); wrapper.style.zIndex = i;
+                const el = createCard(card); el.onclick = () => selectCard(i); wrapper.appendChild(el); cont.appendChild(wrapper);
+            });
+        }
+        function selectCard(i) {
+            if(window.s.turn !== 0 || window.s.phase !== 'play' || window.s.isAnimating) return;
+            if (window.s.selectedIdx === i) { window.s.selectedIdx = -1; renderHands(); document.getElementById('confirm-btn').classList.remove('visible'); return; }
+            const c = window.s.hands[0][i]; 
+            if (window.s.led) { const hasLeadSuit = window.s.hands[0].some(x => getEffectiveSuit(x) === window.s.led); if (hasLeadSuit && getEffectiveSuit(c) !== window.s.led) { showToast(`Must follow lead suit: ${window.s.led}!`); return; } }
+            window.s.selectedIdx = i; renderHands(); document.getElementById('confirm-btn').classList.add('visible');
+        }
+        function createCard(card) {
+            const d = document.createElement('div');
+            const isRed = isRedSuit(card.suit);
+            const isTrump = (card.suit === TRUMP || card.suit === 'JOKER');
+            d.className = `card ${isRed ? 'red' : ''}`;
+            // Apply gold trump highlight to normal trumps (spades), but handle Joker separately
+            if (isTrump && card.suit !== 'JOKER') d.classList.add('trump-highlight');
+            if (card.suit === 'JOKER') {
+                const isBig = card.rank === 'BJ';
+                const src = isBig ? 'big-joker.png' : 'small-joker.png';
+                const alt = isBig ? 'Big Joker' : 'Small Joker';
+                    if (isBig) {
+                    // Big Joker gets a rainbow border (like other trump edges)
+                    d.classList.add('big-joker');
+                    d.innerHTML = `<div class="image-card-face"><img src="${resolveAsset(src)}" alt="${alt}" class="card-image"></div>`;
+                } else {
+                    // Small Joker remains a trump and keeps the gold highlight
+                    d.classList.add('trump-highlight');
+                    d.innerHTML = `<div class="image-card-face"><img src="${resolveAsset(src)}" alt="${alt}" class="card-image"></div>`;
+                }
+            } else {
+                if (card.rank === 'A' && card.suit === '♠') {
+                    d.innerHTML = `<div class="ace-card-face"><img src="ace-of-spade.png" alt="Ace of Spades" class="ace-image"></div>`;
+                } else {
+                    d.innerHTML = `<div class="flex justify-between"><span class="font-black text-[9px]">${card.rank}</span><span class="text-[9px]">${card.suit}</span></div><div class="text-center my-auto text-xl opacity-90">${card.suit}</div><div class="flex justify-between items-end rotate-180"><span class="font-black text-[9px]">${card.rank}</span><span class="text-[9px]">${card.suit}</span></div>`;
+                }
+            }
+            return d;
+        }
+        function getPower(card) { if (card.rank === 'BJ') return 1000; if (card.rank === 'SJ') return 999; let v = RANKS.indexOf(card.rank); if (card.suit === TRUMP) v += 100; return v; }
+        function startBidding() { window.s.phase = 'bidding'; window.s.turn = (window.s.dealer + 1) % window.s.playerCount; nextBid(); }
+        function nextBid() {
+            updateStatus();
+            if(window.s.turn === 0) { document.getElementById('bid-panel').classList.remove('hidden'); document.getElementById('bid-title').innerText = `Your Turn to Bid`; updateBidSummaryUI(); } else {
+                setTimeout(() => {
+                    const h = window.s.hands[window.s.turn]; const isAggro = window.s.styles[window.s.turn] === 'aggro'; let bidPoints = 0; const suitCounts = {};
+                    h.forEach(c => { const s = getEffectiveSuit(c); suitCounts[s] = (suitCounts[s] || 0) + 1; });
+                    h.forEach(c => { const rankVal = RANKS.indexOf(c.rank); const isTrump = c.suit === TRUMP || c.suit === 'JOKER'; if (c.rank === 'BJ' || c.rank === 'SJ') bidPoints += 1.0; else if (isTrump) { if (c.rank === 'A' || c.rank === 'K') bidPoints += 0.95; else if (rankVal >= 10) bidPoints += 0.85; else bidPoints += 0.4; } else if (c.rank === 'A') bidPoints += (suitCounts[c.suit] <= 2) ? 0.85 : 0.7; });
+                    const curSize = window.s.sizes[window.s.round % window.s.sizes.length]; let bid = Math.round(bidPoints * (isAggro ? 1.4 : 0.9));
+                    let maxAllowed = curSize; if (window.s.mode === 'teams') { const partnerIdx = (window.s.turn + 2) % 4; if (window.s.bids[partnerIdx] !== null) maxAllowed = Math.max(0, curSize - window.s.bids[partnerIdx]); }
+                    resolveBid(Math.max(0, Math.min(bid, maxAllowed))); updateBidSummaryUI(); 
+                }, 400);
+            }
+        }
+        function resolveBid(v) {
+            window.s.bids[window.s.turn] = v; const seat = getSeatPos(window.s.turn); const tag = document.getElementById(`p-tag-${seat}`); if (v > 0 && tag) { tag.classList.add('bid-glow'); setTimeout(() => tag.classList.remove('bid-glow'), 1500); }
+            if(window.s.bids.every(b => b !== null)) {
+                window.s.phase = 'play'; let highBid = -1, highPlayers = []; for(let i=0; i<window.s.playerCount; i++) { if (window.s.bids[i] > highBid) { highBid = window.s.bids[i]; highPlayers = [i]; } else if (window.s.bids[i] === highBid) highPlayers.push(i); }
+                let firstOfTie = -1, searchIdx = (window.s.dealer + 1) % window.s.playerCount; for(let i=0; i<window.s.playerCount; i++) { if (highPlayers.includes(searchIdx)) { firstOfTie = searchIdx; break; } searchIdx = (searchIdx + 1) % window.s.playerCount; }
+                window.s.turn = firstOfTie; triggerPlay();
+            } else { window.s.turn = (window.s.turn + 1) % window.s.playerCount; nextBid(); }
+        }
+        function triggerPlay() { updateStatus(); if (window.s.turn !== 0) setTimeout(aiPlay, 600); }
+        function aiPlay() {
+            const h = window.s.hands[window.s.turn]; const idxs = h.map((_, i) => i); const isAggro = window.s.styles[window.s.turn] === 'aggro';
+            const tricksNeeded = (window.s.mode === 'teams') ? ((window.s.bids[window.s.turn] + window.s.bids[(window.s.turn+2)%4]) - (window.s.won[window.s.turn] + window.s.won[(window.s.turn+2)%4])) : (window.s.bids[window.s.turn] - window.s.won[window.s.turn]);
+            const power = (i) => getPower(h[i]);
+            const suitOf = (i) => getEffectiveSuit(h[i]);
+            const highest = (arr) => arr.reduce((best, c) => power(c) > power(best) ? c : best);
+            const lowest = (arr) => arr.reduce((best, c) => power(c) < power(best) ? c : best);
+            let choice;
+
+            if (!window.s.led) {
+                if (tricksNeeded > 0) {
+                    const trumps = idxs.filter(i => suitOf(i) === TRUMP);
+                    const aces = idxs.filter(i => h[i].rank === 'A' && h[i].suit !== TRUMP);
+                    if (isAggro && trumps.length) {
+                        choice = lowest(trumps);
+                    } else if (aces.length) {
+                        choice = highest(aces);
+                    } else {
+                        choice = highest(idxs);
+                    }
+                } else {
+                    choice = lowest(idxs);
+                }
+            } else {
+                let valid = idxs.filter(i => suitOf(i) === window.s.led);
+                if (valid.length === 0) valid = idxs;
+                const bestPlayed = window.s.trick.reduce((p, c) => {
+                    let pP = getPower(p.c); if (getEffectiveSuit(p.c) !== TRUMP && getEffectiveSuit(p.c) !== window.s.led) pP = -1;
+                    let pC = getPower(c.c); if (getEffectiveSuit(c.c) !== TRUMP && getEffectiveSuit(c.c) !== window.s.led) pC = -1;
+                    return pC > pP ? c : p;
+                });
+                const bestPwrOnTable = (getEffectiveSuit(bestPlayed.c) === TRUMP || getEffectiveSuit(bestPlayed.c) === window.s.led) ? getPower(bestPlayed.c) : -1;
+                const partnerWins = (window.s.mode === 'teams' && bestPlayed.p === (window.s.turn + 2) % 4);
+                const canWin = valid.filter(i => {
+                    let myPwr = power(i);
+                    if (suitOf(i) !== TRUMP && suitOf(i) !== window.s.led) myPwr = -1;
+                    return myPwr > bestPwrOnTable;
+                });
+
+                if (tricksNeeded > 0 && canWin.length > 0) {
+                    choice = isAggro ? lowest(canWin) : lowest(canWin);
+                } else if (partnerWins && !isAggro) {
+                    choice = lowest(valid);
+                } else if (isAggro && canWin.length === 0 && valid.length) {
+                    choice = lowest(valid);
+                } else {
+                    choice = lowest(valid);
+                }
+            }
+            doMove(window.s.turn, h.splice(choice, 1)[0]);
+        }
+        function updateLeadUI() { const el = document.getElementById('lead-suit-val'); if (el) { if (!window.s.led) { el.innerText = '-'; el.style.opacity = '0.3'; } else { el.innerText = window.s.led; el.style.opacity = '1'; el.className = `text-xl font-black leading-none mt-1 ${isRedSuit(window.s.led) ? 'suit-red' : 'suit-black'}`; } } }
+        function doMove(p, c) {
+            if(!window.s.trick.length) { window.s.led = getEffectiveSuit(c); updateLeadUI(); }
+            window.s.trick.push({p, c}); const el = createCard(c); el.className += " played-card"; el.style.cssText = getCardStyle(p); document.getElementById('trick-pile').appendChild(el); playDeal();
+            if (p !== 0) { const handEl = document.getElementById(`hand-${getSeatPos(p)}`); if (handEl && handEl.lastChild) handEl.removeChild(handEl.lastChild); } else renderHands();
+            window.s.turn = (window.s.turn + 1) % window.s.playerCount; if(window.s.trick.length === window.s.playerCount) { window.s.isAnimating = true; setTimeout(resolveTrick, 900); } else triggerPlay();
+        }
+        function resolveTrick() {
+            let win = -1, best = -1; window.s.trick.forEach(t => { let pwr = getPower(t.c); if (getEffectiveSuit(t.c) !== TRUMP && getEffectiveSuit(t.c) !== window.s.led) pwr = -1; if (pwr > best) { best = pwr; win = t.p; } });
+            window.s.won[win]++; window.s.turn = win; window.s.trick = []; window.s.led = null; updateLeadUI();
+            const ticker = document.getElementById('winner-ticker'); if (ticker) ticker.innerText = `${window.s.p[win].name.toUpperCase()} WINS`;
+            setTimeout(() => { document.getElementById('trick-pile').innerHTML = ''; if (ticker) ticker.innerText = ''; window.s.isAnimating = false; if(window.s.hands.every(h => h.length === 0)) endRound(); else triggerPlay(); }, 700);
+        }
+        function endRound() {
+            document.getElementById('end-game-buttons').classList.add('hidden');
+            document.getElementById('final-announcement').classList.add('hidden');
+            document.getElementById('total-scoreboard').classList.add('hidden');
+            document.getElementById('btn-next-deal').classList.remove('hidden');
+            const calc = (bid, won) => bid === 0 ? 0 : (won >= bid ? (bid*4)+(won-bid) : -(bid*4));
+            let summaryHtml = "", totalScoreHtml = "", roundHistory = { size: window.s.sizes[window.s.round % window.s.sizes.length], data: [] };
+            if (window.s.mode === 'teams') {
+                const t1B = window.s.bids[0] + window.s.bids[2], t1W = window.s.won[0] + window.s.won[2], t2B = window.s.bids[1] + window.s.bids[3], t2W = window.s.won[1] + window.s.won[3], p1 = calc(t1B, t1W), p2 = calc(t2B, t2W);
+                window.s.p[0].score += p1; window.s.p[2].score += p1; window.s.p[1].score += p2; window.s.p[3].score += p2;
+                summaryHtml += `<div class="suit-divider-mini"><span class="text-black">♠</span></div><div class="flex justify-between text-[#d4af37] font-bold score-row"><span>${window.s.teamNames[0]}</span><span>${p1>=0?'+':''}${p1}</span></div><div class="suit-divider-mini"><span class="text-red-600">♥</span></div><div class="flex justify-between score-row"><span>${window.s.teamNames[1]}</span><span>${p2>=0?'+':''}${p2}</span></div>`;
+                totalScoreHtml += `<div class="suit-divider-mini"><span class="text-black">♠</span></div><div class="flex justify-between font-black text-[#d4af37] score-row"><span>${window.s.teamNames[0]}</span><span class="score-val">${window.s.p[0].score}</span></div><div class="suit-divider-mini"><span class="text-red-600">♥</span></div><div class="flex justify-between font-black text-white score-row"><span>${window.s.teamNames[1]}</span><span class="score-val">${window.s.p[1].score}</span></div>`;
+                roundHistory.data.push({bid: t1B, won: t1W, points: p1}, {bid: t2B, won: t2W, points: p2});
+            } else {
+                window.s.p.forEach((p, i) => { const pts = calc(window.s.bids[i], window.s.won[i]); p.score += pts; const suit = SUITS[i % 4]; summaryHtml += `<div class="suit-divider-mini"><span class="${getSuitColorClass(suit)}">${suit}</span></div><div class="flex justify-between ${i===0?'text-[#d4af37] font-bold':''} score-row"><span>${p.name}</span><span>${pts>=0?'+':''}${pts}</span></div>`; totalScoreHtml += `<div class="suit-divider-mini"><span class="${getSuitColorClass(suit)}">${suit}</span></div><div class="flex justify-between font-black ${i===0?'text-[#d4af37]':'text-white'} score-row"><span>${p.name}</span><span class="score-val">${p.score}</span></div>`; roundHistory.data.push({bid: window.s.bids[i], won: window.s.won[i], points: pts}); });
+            }
+            window.s.history.push(roundHistory); document.getElementById('summary').innerHTML = summaryHtml;
+            if (window.s.round === window.s.sizes.length - 1) {
+                document.getElementById('btn-next-deal').classList.add('hidden'); document.getElementById('end-game-buttons').classList.remove('hidden'); 
+                document.getElementById('final-announcement').classList.remove('hidden'); document.getElementById('total-scoreboard').classList.remove('hidden');
+                document.getElementById('total-scores-list').innerHTML = totalScoreHtml;
+                const cat = window.s.mode === 'teams' ? 'teams' : 'single';
+                window.s.stats[cat].gamesPlayed++;
+                // record highest single-game points (preserve from older schema if present)
+                window.s.stats[cat].highestPoints = Math.max(window.s.stats[cat].highestPoints || 0, window.s.p[0].score || 0);
+                let winIdx = (window.s.mode === 'teams') ? (window.s.p[0].score >= window.s.p[1].score ? 0 : 1) : window.s.p.reduce((best, curr, idx) => curr.score > window.s.p[best].score ? idx : best, 0);
+                if (winIdx === 0) { window.s.stats[cat].gamesWon++; triggerWinCelebration(); document.getElementById('final-announcement').innerText = "VICTORY!"; } else { document.getElementById('final-announcement').innerText = "DEFEAT"; }
+                saveStats();
+            } else document.getElementById('btn-next-deal').classList.remove('hidden');
+            document.getElementById('modal').classList.remove('hidden'); updatePermanentScores();
+        }
+        function triggerWinCelebration() {
+            const colors = ['#d4af37', '#fbbf24', '#fdf6e3', '#ffffff'];
+            for (let i = 0; i < 50; i++) {
+                const c = document.createElement('div'); c.className = 'confetti'; c.style.left = Math.random() * 100 + 'vw';
+                c.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)]; c.style.animationDelay = Math.random() * 2 + 's';
+                c.style.width = (Math.random() * 8 + 4) + 'px'; c.style.height = c.style.width; document.body.appendChild(c); setTimeout(() => c.remove(), 5000);
+            }
+        }
+        function updatePermanentScores() {
+            const container = document.getElementById('score-rows-container'); if (!container) return; container.innerHTML = '';
+            if (window.s.mode === 'teams') container.innerHTML += `<div class="suit-divider-mini"><span class="text-black">♠</span></div><div class="flex justify-between gap-1 border-b border-black/5 pb-0.5 score-row"><span class="text-[8px] text-gray-700 font-black uppercase truncate w-14">${window.s.teamNames[0]}</span><span class="score-val text-black font-black">${window.s.p[0].score}</span></div><div class="suit-divider-mini"><span class="text-red-600">♥</span></div><div class="flex justify-between gap-1 pt-0.5 score-row"><span class="text-[8px] text-gray-700 font-black uppercase truncate w-14">${window.s.teamNames[1]}</span><span class="score-val text-black font-black">${window.s.p[1].score}</span></div>`;
+            else window.s.p.forEach((p, idx) => { const suit = SUITS[idx % 4]; container.innerHTML += `<div class="suit-divider-mini"><span class="${getSuitColorClass(suit)}">${suit}</span></div><div class="flex justify-between gap-1 ${idx !== window.s.p.length - 1 ? 'border-b border-black/5 pb-0.5 mb-0.5' : ''} score-row"><span class="text-[8px] text-gray-700 font-black uppercase truncate w-14">${p.name}</span><span class="score-val text-black font-black">${p.score}</span></div>`; });
+        }
+        function updateStatus() {
+            for(let i=0; i<window.s.playerCount; i++) {
+                const seat = getSeatPos(i); const el = document.getElementById(`p-tag-${seat}`); if (!el) continue;
+                const suit = SUITS[i % 4]; el.style.opacity = '1'; 
+                el.innerHTML = `<div class="suit-divider-mini opacity-60 mb-1"><span class="${getSuitColorClass(suit)}">${suit}</span></div><div class="flex items-center gap-2">${i > 0 ? `<span class="dot ${window.s.styles[i]==='aggro'?'dot-red':'dot-blue'}"></span>` : ''}<span>${window.s.p[i] ? window.s.p[i].name : getDefaultName(i)} [${window.s.bids[i]!==null?window.s.bids[i]:'?'}/${window.s.won[i]}]</span>${window.s.dealer===i ? '<span class="dealer-chip">D</span>' : ''}</div>`;
+                el.classList.toggle('active-turn', window.s.turn === i && window.s.phase !== 'idle');
+            }
+        }
+        function renderHistory() {
+            const head = document.getElementById('history-head'), body = document.getElementById('history-body'); head.innerHTML = ''; body.innerHTML = '';
+            let headerRow = `<tr><th class="border-b border-panel-border/30 pb-2">#</th>`;
+            if (window.s.mode === 'teams') headerRow += `<th class="border-b border-panel-border/30 pb-2">${window.s.teamNames[0]}</th><th class="border-b border-panel-border/30 pb-2">Pts</th><th class="border-b border-panel-border/30 pb-2">${window.s.teamNames[1]}</th><th class="border-b border-panel-border/30 pb-2">Pts</th>`;
+            else window.s.p.forEach(p => { headerRow += `<th class="border-b border-panel-border/30 pb-2">${p.name}</th><th class="border-b border-panel-border/30 pb-2">Pts</th>`; });
+            headerRow += `</tr>`; head.innerHTML = headerRow;
+            if (window.s.history.length === 0) { body.innerHTML = `<tr><td colspan="10" class="py-10 opacity-60 italic text-center">No logs.</td></tr>`; return; }
+            window.s.history.forEach(entry => { let rowHtml = `<tr><td>${entry.size}</td>`; entry.data.forEach(d => { rowHtml += `<td>${d.bid}/${d.won}</td><td class="${d.points >= 0 ? 'history-pos' : 'history-neg'}">${d.points >= 0 ? '+' : ''}${d.points}</td>`; }); rowHtml += `</tr>`; body.innerHTML += rowHtml; });
+        }
+
+        document.getElementById('btn-next-deal').onclick = () => { document.getElementById('modal').classList.add('hidden'); window.s.round++; window.s.dealer = (window.s.dealer + 1) % window.s.playerCount; startRound(); };
+        
+        window.goToLobby = () => {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('lobby-overlay').classList.remove('hidden');
+        };
+        
+        window.onload = () => { window.setMode('single'); window.setCount(4); renderInputs(); if (!firebaseEnabled) { const startBtn = document.getElementById('start-btn'); if (startBtn) { startBtn.innerText = 'START GAME'; startBtn.disabled = false; startBtn.classList.remove('opacity-50','cursor-not-allowed'); } } };
+    </script>
+</body>
+</html>

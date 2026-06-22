@@ -1,0 +1,22 @@
+:root{ --app-padding: 18px }
+html,body{height:100%;margin:0}
+body{font-family:system-ui,Arial,Helvetica,sans-serif}
+.app{min-height:100vh;padding:var(--app-padding);box-sizing:border-box}
+.bg-container{position:relative;overflow:hidden}
+.bg-container::before{content:"";position:absolute;inset:0;z-index:-2}
+.bg-container{background-repeat:no-repeat;background-size:cover;background-position:center}
+
+.preview{width:320px;height:140px;border:1px solid #ccc;background-size:cover;background-position:center}
+
+.bg-img{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;z-index:-3;display:none}
+
+/* Ensure backgrounds show in print; some browsers block background images — using img layer helps */
+@media print{
+  *{box-shadow:none}
+  html,body{height:100%}
+  .printable{ -webkit-print-color-adjust:exact; print-color-adjust:exact }
+  .bg-img{display:block}
+}
+
+header{margin-bottom:1rem}
+nav a{color:inherit}
